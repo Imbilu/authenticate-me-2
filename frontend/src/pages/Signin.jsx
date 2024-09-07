@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { json, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     signInFail,
     signInStart,
@@ -8,7 +8,7 @@ import {
 } from "../store/user/userSlice";
 
 export default function SignIn() {
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState({ email: "", password: "" });
     const { loading, error } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -16,8 +16,17 @@ export default function SignIn() {
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
     };
+
+    const validateForm = () => {
+        return formData.email && formData.password;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            dispatch(signInFail({ message: "Please fill in all fields." }));
+            return;
+        }
         try {
             dispatch(signInStart());
             const res = await fetch("/api/auth/signin", {
@@ -31,10 +40,16 @@ export default function SignIn() {
                 dispatch(signInSuccess(data));
                 navigate("/");
             } else {
-                dispatch(signInFail());
+                dispatch(
+                    signInFail({ message: data.message || "Sign in failed." })
+                );
             }
         } catch (error) {
-            dispatch(signInFail(error));
+            dispatch(
+                signInFail({
+                    message: error.message || "Something went wrong!",
+                })
+            );
         }
     };
 
@@ -48,6 +63,7 @@ export default function SignIn() {
                     id="email"
                     className="bg-slate-100 p-3 rounded-lg"
                     onChange={handleChange}
+                    value={formData.email}
                 />
                 <input
                     type="password"
@@ -55,6 +71,7 @@ export default function SignIn() {
                     id="password"
                     className="bg-slate-100 p-3 rounded-lg"
                     onChange={handleChange}
+                    value={formData.password}
                 />
                 <button
                     className="bg-slate-700 text-white p-3 rounded-lg hover:opacity-95 disabled:opacity-80"
