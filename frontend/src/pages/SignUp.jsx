@@ -3,16 +3,36 @@ import { Link } from "react-router-dom";
 
 export default function SignUp() {
     const [formData, setFormData] = useState({});
-    const [error, setError] = useState(null)
-    const [loading, setLoading] = useState(false)
-    
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
     };
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-    };
 
+        try {
+            setLoading(true);
+            setError(false);
+            const res = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                navigate("/sign-in");
+            } else {
+                setError(true);
+            }
+        } catch (error) {
+            setLoading(false);
+            setError(true);
+        }
+    };
 
     return (
         <div className="p-3 max-w-lg mx-auto">

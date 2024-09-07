@@ -1,17 +1,41 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { json, Link, useNavigate } from "react-router-dom";
+import {
+    signInFail,
+    signInStart,
+    signInSuccess,
+} from "../store/user/userSlice";
 
 export default function SignIn() {
     const [formData, setFormData] = useState({});
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const { loading, error } = useSelector((state) => state.user);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
     };
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        try {
+            dispatch(signInStart());
+            const res = await fetch("/api/auth/signin", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                dispatch(signInSuccess(data));
+                navigate("/");
+            } else {
+                dispatch(signInFail());
+            }
+        } catch (error) {
+            dispatch(signInFail(error));
+        }
     };
 
     return (
@@ -32,8 +56,11 @@ export default function SignIn() {
                     className="bg-slate-100 p-3 rounded-lg"
                     onChange={handleChange}
                 />
-                <button className="bg-slate-700 text-white p-3 rounded-lg hover:opacity-95 disabled:opacity-80">
-                    Sign In
+                <button
+                    className="bg-slate-700 text-white p-3 rounded-lg hover:opacity-95 disabled:opacity-80"
+                    disabled={loading}
+                >
+                    {loading ? "Loading..." : "Sign In"}
                 </button>
             </form>
             <div className="flex gap-2 mt-5">
@@ -41,6 +68,11 @@ export default function SignIn() {
                 <Link to="/sign-up">
                     <span className="text-blue-500">Sign Up</span>
                 </Link>
+            </div>
+            <div>
+                <p className="text-red-700 mt-5">
+                    {error ? error.message || "Something went wrong!" : ""}
+                </p>
             </div>
         </div>
     );
