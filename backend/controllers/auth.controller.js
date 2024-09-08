@@ -18,23 +18,40 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
     const { email, password } = req.body;
-    // const hashedPassword = bcryptjs.hashSync(password);
+
     try {
+        // Find the user by email
         const validUser = await User.findOne({ email });
-        if (!validUser) return next(errorHandler(404, "User not found"));
-        const validPassword = bcryptjs.compareSync(
+        if (!validUser) {
+            return next(errorHandler(404, "User not found"));
+        }
+
+        // Compare the entered password with the stored hashed password (async version)
+        const validPassword = await bcryptjs.compare(
             password,
             validUser.password
         );
-        if (!validPassword)
+        if (!validPassword) {
             return next(errorHandler(401, "Wrong username or password"));
-        const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
+        }
+
+        // Sign a JWT with the user's ID and a secret key, and set an expiration time
+        const token = jwt.sign(
+            { id: validUser._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" } // JWT expires in 7 days
+        );
+
+        // Destructure the validUser to omit the password before sending the response
         const { password: hashedPassword, ...user } = validUser._doc;
+
+        // Send the token as a cookie and return the user info
         res.cookie("access_token", token, {
             httpOnly: true,
-            expires: 604800 * 1000,
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         }).json(user);
     } catch (error) {
+        // Forward any error to the custom error handler
         next(error);
     }
 };

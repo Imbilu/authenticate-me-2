@@ -36,13 +36,15 @@ export default function SignIn() {
                 body: JSON.stringify(formData),
             });
 
-            const data = await res.json();
+            console.log(res);
+            let data;
             if (res.ok) {
+                data = await res.json();
                 dispatch(signInSuccess(data));
                 navigate("/");
             } else {
                 dispatch(
-                    signInFail({ message: data.message || "Sign in failed." })
+                    signInFail({ message: res.statusText || "Sign in failed." })
                 );
             }
         } catch (error) {
