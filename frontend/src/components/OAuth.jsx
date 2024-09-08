@@ -1,7 +1,7 @@
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { app } from "../firebase";
 import { useDispatch } from "react-redux";
-import { signInSuccess } from "../store/user/userSlice";
+import { signInFail, signInSuccess } from "../store/user/userSlice";
 
 export default function OAuth() {
     const dispatch = useDispatch();
@@ -20,8 +20,11 @@ export default function OAuth() {
                     photo: result.user.photoURL,
                 }),
             });
-            const data = await res.json();
-            dispatch(signInSuccess(data));
+            console.log(res);
+            if (res.ok) {
+                const data = await res.json();
+                dispatch(signInSuccess(data));
+            } else dispatch(signInFail(res.statusText));
         } catch (error) {
             console.log("Google authentication failed", error);
         }

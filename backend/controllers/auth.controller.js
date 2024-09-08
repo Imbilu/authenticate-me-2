@@ -58,16 +58,16 @@ export const signin = async (req, res, next) => {
 
 export const google = async (req, res, next) => {
     try {
-        const user = await user.findOne({ email: req.body.email });
-        if (user) {
+        const foundUser = await user.findOne({ email: req.body.email });
+        if (foundUser) {
             const token = jwt.sign(
-                { id: validUser._id },
+                { id: foundUser._id },
                 process.env.JWT_SECRET
             );
-            const { password: hashedPassword, ...user } = validUser._doc;
+            const { password: hashedPassword, ...user } = foundUser._doc;
             res.cookie("access_token", token, {
                 httpOnly: true,
-                expires: 604800 * 1000,
+                expires: new Date(Date.now + 604800 * 1000),
             }).json(user);
         } else {
             const generatedPassword = Math.random().toString(36).slice(-8);
@@ -85,8 +85,10 @@ export const google = async (req, res, next) => {
             const { password: hashedPassword2, ...user } = newUser._doc;
             res.cookie("access_token", token, {
                 httpOnly: true,
-                expires: 604800 * 1000,
+                expires: new Date(Date.now + 604800 * 1000),
             }).json(user);
         }
-    } catch (error) {}
+    } catch (error) {
+        next(error);
+    }
 };
