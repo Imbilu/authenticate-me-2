@@ -10,7 +10,6 @@ const rootReducer = combineReducers({ user: userReducer });
 // Persist config
 const persistConfig = {
     key: "root",
-    version: 1, // Optional, only include if needed
     storage,
 };
 
