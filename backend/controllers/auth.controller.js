@@ -30,8 +30,46 @@ export const signin = async (req, res, next) => {
             return next(errorHandler(401, "Wrong username or password"));
         const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
         const { password: hashedPassword, ...user } = validUser._doc;
-        res.cookie("access_token", token, { httpOnly: true }).json(user);
+        res.cookie("access_token", token, {
+            httpOnly: true,
+            expires: 604800 * 1000,
+        }).json(user);
     } catch (error) {
         next(error);
     }
+};
+
+export const google = async (req, res, next) => {
+    try {
+        const user = await user.findOne({ email: req.body.email });
+        if (user) {
+            const token = jwt.sign(
+                { id: validUser._id },
+                process.env.JWT_SECRET
+            );
+            const { password: hashedPassword, ...user } = validUser._doc;
+            res.cookie("access_token", token, {
+                httpOnly: true,
+                expires: 604800 * 1000,
+            }).json(user);
+        } else {
+            const generatedPassword = Math.random().toString(36).slice(-8);
+            const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
+            const username = req.body.name.toLowerCase().replace(/\s+/g, "_");
+            username += Math.floor(Math.random() * 9000) + 1000;
+            const newUser = new User({
+                username: username,
+                email: req.body.email,
+                password: hashedPassword,
+                profilePic: req.body.photo,
+            });
+            await newUser.save();
+            const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
+            const { password: hashedPassword2, ...user } = newUser._doc;
+            res.cookie("access_token", token, {
+                httpOnly: true,
+                expires: 604800 * 1000,
+            }).json(user);
+        }
+    } catch (error) {}
 };
