@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { app } from "../firebase";
 import {
     getDownloadURL,
@@ -7,14 +7,20 @@ import {
     ref,
     uploadBytesResumable,
 } from "firebase/storage";
+import {
+    updateUserFail,
+    updateUserStart,
+    updateUserSuccess,
+} from "../store/user/userSlice";
 
 export default function Profile() {
-    const { user } = useSelector((state) => state.user);
+    const { currentUser, loading, error } = useSelector((state) => state.user);
     const [image, setImage] = useState(undefined);
     const [loadPercent, setLoadPercent] = useState(0);
     const [imageError, setImageError] = useState(false);
     const [formData, setFormData] = useState({});
     const fileRef = useRef(null);
+    const dispatch = useDispatch();
 
     const handleFileUpload = async (image) => {
         try {
@@ -60,6 +66,32 @@ export default function Profile() {
         }
     };
 
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            dispatch(updateUserStart());
+            res = await fetch(`/api/user/update/${currentUser._id}`, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            let data;
+            if (res.ok) {
+                data = await res.json();
+                dispatch(updateUserSuccess(data));
+            } else dispatch(updateUserFail());
+        } catch (error) {
+            dispatch(updateUserFail());
+        }
+    };
+
     useEffect(() => {
         if (image) handleFileUpload(image);
     }, [image]);
@@ -67,7 +99,7 @@ export default function Profile() {
     return (
         <div className="p-3 max-lg mx-auto">
             <h1 className="text-3xl font-semibold text-center my-7">Profile</h1>
-            <form className="flex flex-col gap-4">
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
                 <input
                     type="file"
                     ref={fileRef}
@@ -76,7 +108,10 @@ export default function Profile() {
                     onChange={(e) => setImage(e.target.files[0])}
                 />
                 <img
-                    src={formData.profilePic || (user && user.profilePic)}
+                    src={
+                        formData.profilePic ||
+                        (currentUser && currentUser.profilePic)
+                    }
                     alt="profile picture"
                     className="h-24 w-24 self-center cursor-pointer rounded-full object-cover bg-gray-300"
                     onClick={() => fileRef.current.click()}
@@ -98,26 +133,32 @@ export default function Profile() {
                     )}
                 </p>
                 <input
-                    defaultValue={user && user.username}
+                    defaultValue={currentUser && currentUser.username}
                     type="text"
                     placeholder="Username"
                     className="bg-slate-100 rounded-lg p-3"
+                    onChange={handleChange}
                 />
                 <input
-                    defaultValue={user && user.email}
+                    defaultValue={currentUser && currentUser.email}
                     type="text"
                     placeholder="Email"
                     className="bg-slate-100 rounded-lg p-3"
+                    onChange={handleChange}
                 />
                 <input
                     type="password"
                     placeholder="Password"
                     className="bg-slate-100 rounded-lg p-3"
+                    onChange={handleChange}
                 />
                 <button className="bg-slate-700 rounded-lg text-white p-3 uppercase hover:opacity-95 disabled:opacity-80">
-                    Update
+                    {loading ? "Loading..." : "Update"}
                 </button>
             </form>
+            <p className="text-red-500 mt-5">
+                {error && "Something went wrong"}
+            </p>
             <div className="flex justify-between">
                 <span className="text-red-500 cursor-pointer">
                     Delete Account
