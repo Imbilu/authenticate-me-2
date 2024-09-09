@@ -36,7 +36,6 @@ export default function SignIn() {
                 body: JSON.stringify(formData),
             });
 
-            console.log(res);
             let data;
             if (res.ok) {
                 data = await res.json();

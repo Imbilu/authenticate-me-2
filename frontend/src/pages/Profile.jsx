@@ -8,6 +8,9 @@ import {
     uploadBytesResumable,
 } from "firebase/storage";
 import {
+    deleteUserFail,
+    deleteUserStart,
+    deleteUserSuccess,
     updateUserFail,
     updateUserStart,
     updateUserSuccess,
@@ -92,6 +95,21 @@ export default function Profile() {
         }
     };
 
+    const handleDelete = async () => {
+        try {
+            dispatch(deleteUserStart());
+            const res = await fetch(`api/user/delete/${currentUser._id}`, {
+                method: "DELETE",
+            });
+            const data = res.json();
+            if (res.ok) {
+                dispatch(deleteUserSuccess(data));
+            } else dispatch(deleteUserFail(data));
+        } catch (error) {
+            dispatch(deleteUserFail());
+        }
+    };
+
     useEffect(() => {
         if (image) handleFileUpload(image);
     }, [image]);
@@ -160,7 +178,10 @@ export default function Profile() {
                 {error && "Something went wrong"}
             </p>
             <div className="flex justify-between">
-                <span className="text-red-500 cursor-pointer">
+                <span
+                    className="text-red-500 cursor-pointer"
+                    onClick={handleDelete}
+                >
                     Delete Account
                 </span>
                 <span className="text-red-500 cursor-pointer">Sign Out</span>
