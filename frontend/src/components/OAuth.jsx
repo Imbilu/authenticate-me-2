@@ -22,14 +22,13 @@ export default function OAuth() {
                     photo: result.user.photoURL,
                 }),
             });
-            console.log(res);
             if (res.ok) {
                 const data = await res.json();
                 dispatch(signInSuccess(data));
                 navigate("/home");
             } else dispatch(signInFail(res.statusText));
         } catch (error) {
-            console.log("Google authentication failed", error);
+            res.error("Google authentication failed");
         }
     };
 
