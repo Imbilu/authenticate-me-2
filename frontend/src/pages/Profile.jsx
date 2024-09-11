@@ -11,6 +11,7 @@ import {
     deleteUserFail,
     deleteUserStart,
     deleteUserSuccess,
+    signOut,
     updateUserFail,
     updateUserStart,
     updateUserSuccess,
@@ -110,6 +111,11 @@ export default function Profile() {
         }
     };
 
+    const handleSignOut = async () => {
+        const res = await fetch("/api/auth/signout");
+        if (res.ok) dispatch(signOut());
+    };
+
     useEffect(() => {
         if (image) handleFileUpload(image);
     }, [image]);
@@ -184,7 +190,12 @@ export default function Profile() {
                 >
                     Delete Account
                 </span>
-                <span className="text-red-500 cursor-pointer">Sign Out</span>
+                <span
+                    className="text-red-500 cursor-pointer"
+                    onClick={handleSignOut}
+                >
+                    Sign Out
+                </span>
             </div>
         </div>
     );
